@@ -1,10 +1,12 @@
 # AskToVideoBot2
 
-AskToVideoBot is a Streamlit project with an AWS-hosted backend that leverages the power of AI to transcribe videos, provide quick meeting summaries, and answer questions based on the transcribed content. The project uses the Claude V2 model hosted on AWS Bedrock for transcription and analysis.
+AskToVideoBot is a Streamlit project with an AWS-hosted backend that leverages the power of AI to transcribe videos, provide quick meeting summaries, and answer questions based on the transcribed content. The project allows to use AWS services such as AWS transcribe for transcription and models such as the Claude V2/Claude V2.1/Claude Instant etc hosted on AWS Bedrock for analysis.
 
 ## Features
 
-- **Video Transcription:** Upload any video, and the bot will transcribe its content using the Claude V2 model.
+- **Video Transcription:** Upload any video, and the bot will transcribe its content using the AWS Transcribe Service.
+
+- **Select LLM:** Select LLM from options such as the Claude V2/Claude V2.1/Claude Instant model.
 
 - **Meeting Summary:** Receive a quick summary of the meeting and identify action items extracted from the transcribed content.
 
@@ -34,8 +36,7 @@ To run this repository:
 
 1. Clone the repository to your local machine.
 2. Install dependencies using the `pip install -r requirements.txt` command.
-3. Install ffmpeg by running `sudo apt-get install ffmpeg`.
-4. Run fronend using `streamlit run frontend.py`.
+3. Run fronend using `streamlit run frontend.py`.
 
 Now, you're ready to explore the capabilities of AskToVideoBot and enhance your video interaction experience.
 
