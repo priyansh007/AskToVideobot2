@@ -1,0 +1,4 @@
+libAWS/
+SpeechToText/
+__pycache__/
+.DS_Store
