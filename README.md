@@ -14,6 +14,16 @@ AskToVideoBot is a Streamlit project with an AWS-hosted backend that leverages t
 
 - **Backup to S3:** All files, including transcriptions and summaries, are uploaded to AWS S3 for backup and storage purposes.
 
+## Screenshots
+
+- 1. Upload a video
+![Alt text](./images/Image1.png)
+- 2. Analyse a video
+![Alt text](./images/Image2.png)
+- 3. Summarize a video
+![Alt text](./images/Image3.png)
+
+
 ## Technologies Used
 
 The project incorporates the following services and packages:
