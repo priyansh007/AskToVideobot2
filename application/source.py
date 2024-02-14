@@ -1,9 +1,8 @@
 import boto3
-from langchain.chains import LLMChain
-from langchain.llms.bedrock import Bedrock
-from langchain.prompts import PromptTemplate
 import json
 import os
+import shutil
+
 def download_from_s3(key, local_file, bucket="speech-to-text-meetsummarizar"):
     s3_client = boto3.client("s3")
     s3_client.download_file(bucket, key, local_file)
@@ -53,32 +52,11 @@ def delete_files_in_folder(folder_path):
     except Exception as e:
         print(f"Error deleting files in folder '{folder_path}': {e}")
 
-def llm_bot(content,
-            isChatBot=False,
-            query="",
-            modelId = "anthropic.claude-v2"):
-        
-        bedrock_client = boto3.client(
-            service_name = "bedrock-runtime",
-            region_name="us-east-1"
-        )
+def delete_folder(folder_path):
+    try:
+        shutil.rmtree(folder_path)
+    except Exception as e:
+        print(f"Error deleting folder '{folder_path}': {e}")
 
-        llm = Bedrock(model_id=modelId,
-                    client=bedrock_client,
-                    model_kwargs={"temperature":0.9}
-                    )
-        if isChatBot:
-            template = "You are a Scrum master/Project Manager bot who has knowledge of all scrum ceremonies and best practices. Using this meeting transcribe context: {transcribe}, answer this question: {query}"
-        else:
-            template="You are a scrum master bot who has knowledge of all scrum ceremonies and best practices. Your job is to find To-Do task, Roadblockers and Action Item from the transcribe of a meeting. If Assignee is mentioned in transcribe please incluse name as well. At the end of your answer please include the summary of meeting. Transcribe is {transcribe}"
-        
 
-        prompt = PromptTemplate(
-            input_variables=["transcribe","query"],
-            template=template
-            )
-        
-        bedrock_chain = LLMChain(llm=llm, prompt=prompt)
-
-        response=bedrock_chain({'transcribe':content, 'query': query})
-        return response['text']
+            
