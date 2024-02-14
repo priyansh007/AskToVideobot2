@@ -203,7 +203,7 @@ if __name__ == "__main__":
                  "Claude V2.1": "anthropic.claude-v2:1",}
     s3_bucket="speech-to-text-meetsummarizar"
     local_folder = "SpeechToText"
-    user_folder = "defaultUser3"
+    user_folder = "defaultUser"
       
 
     show_main_dashboard(model_map,
