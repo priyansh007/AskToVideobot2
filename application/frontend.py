@@ -192,7 +192,8 @@ def show_main_dashboard(modelmap,
                     file.write(summary)
             st.subheader("Summary:")
             st.text_area("Details are from Claude LLM",value=summary, height=500, max_chars=None)
-        except:
+        except Exception as e:
+            print(e)
             st.text_area("Message",value="No files Found, wait for some more time", height=50, max_chars=None)
 
 

@@ -57,6 +57,4 @@ def delete_folder(folder_path):
         shutil.rmtree(folder_path)
     except Exception as e:
         print(f"Error deleting folder '{folder_path}': {e}")
-
-
             

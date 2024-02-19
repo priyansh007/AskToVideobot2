@@ -6,6 +6,9 @@ import boto3
 from langchain.chains import LLMChain
 from langchain.llms.bedrock import Bedrock
 from langchain.prompts import PromptTemplate
+from langchain.chains import load_summarize_chain
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 def llm_bot(modelId):
     bedrock_client = boto3.client(
             service_name = "bedrock-runtime",
@@ -28,9 +31,9 @@ def conversation_bot(file_name,
         if file_name not in st.session_state:
             st.session_state[file_name]=[
                 SystemMessage(content= """You are a Scrum bot assitant who understands meeting transcribe 
-                              and reply to user as scrum master or project manager, If answer is not related to 
-                              transcribe you can answer as normal chat bot. 
-                              You can use following transcribe for answering the question: """+str(transcribe))
+                              and reply to user as scrum master or project manager, If question is not related to 
+                              transcribe you can say that question is not related to transcribe instead of answering out of content context. 
+                              You can use following meeting transcribe for answering the question: """+str(transcribe))
             ]
 
         st.session_state[file_name].append(HumanMessage(content=query))
@@ -41,18 +44,35 @@ def conversation_bot(file_name,
 
 def summarizer_bot(transcribe,
                    modelId = "anthropic.claude-v2"):
-    llm = llm_bot(modelId)
-    template="""You are a Scrum bot who has knowledge of all scrum ceremonies and best practices.
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    chunks = text_splitter.create_documents([transcribe])
+    
+    chunks_prompt="""
+    Please summarize the below speech:
+    Speech:`{text}'
+    Summary:
+    """
+    map_prompt_template=PromptTemplate(input_variables=['text'],
+                                            template=chunks_prompt)
+    
+    final_combine_prompt="""You are a Scrum bot who has knowledge of all scrum ceremonies and best practices.
     Your job is to find To-Do task, Roadblockers and Action Item from the transcribe of a meeting. 
     If Assignee is mentioned in transcribe please incluse name as well. 
-    At the end of your answer please include the summary of meeting. 
-    Transcribe is {transcribe}"""
-        
+    At the end of your answer please Provide a final summary of the meeting. 
+    Transcribe: {text}"""
 
-    prompt = PromptTemplate(
-        input_variables=["transcribe"],
-        template=template
-        )
-    bedrock_chain = LLMChain(llm=llm, prompt=prompt)
-    response=bedrock_chain({'transcribe':transcribe})
-    return response['text']
+
+    final_combine_prompt_template=PromptTemplate(input_variables=['text'],
+                                                template=final_combine_prompt)
+    
+    llm = llm_bot(modelId)
+
+    summary_chain = load_summarize_chain(
+        llm=llm,
+        chain_type='map_reduce',
+        map_prompt=map_prompt_template,
+        combine_prompt=final_combine_prompt_template,
+        verbose=False
+    )
+    output = summary_chain.run(chunks)
+    return output
