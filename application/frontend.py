@@ -9,7 +9,7 @@ from conversation_bot import summarizer_bot
 def show_dropdown(bucket_file_list):
     options = [item for item in bucket_file_list if ".txt" in item]
     default = st.session_state.get("selected_option", options[0])
-    selected_option = st.selectbox("Select Transcribe files", options, index=options.index(default))
+    selected_option = st.sidebar.selectbox("Select previously uploaded files", options, index=options.index(default))
     if selected_option != default:
         st.session_state.chat_history = []
     st.session_state["selected_option"] = selected_option
@@ -82,21 +82,26 @@ def handle_upload_functionality(uploaded_video_file,
                                     format=uploaded_video_file.file_extension, 
                                     output_bucket=s3_bucket, 
                                     output_key=uploaded_video_file.transcribe_s3_path)
-        st.text_area("Message",value="Job has been scheduled please check Analyze or Summarize option after few minutes!!", height=50, max_chars=None)
+        st.success('''Great news! Your task has been scheduled. 
+                   Feel free to check back in a few minutes—around the same time it takes to watch your input video. 
+                   You can find them under the 'Q&A' or 'Summarize' options. Happy exploring!!!''')
     elif(uploaded_video_file.file_extension == "txt"):
-        st.text_area("Message",value="File Uploaded and Available to Analyze!!", height=50, max_chars=None)
+        st.success("File Uploaded Successfully and Available to Analyze!!")
     else:
-        st.text_area("Message",value="Our record shows that file is already uploaded to S3", height=50, max_chars=None)
+        st.warning(f"Our record shows that File already exists with our system. (Please use other sections for analyse or change the name of file.) ")
         
     
 def ask_LLM(content, modelId, selected_option):
     chat_history = st.session_state.get("chat_history", [])
+    
+
     with st.form(key='user_input_form'):
         user_query = st.text_input("Enter your query:")
-        submit_button = st.form_submit_button(label='Ask LLM')
+        submit_button = st.form_submit_button(label='Ask to AI')
 
     # Button to trigger the ask_llm function
     if submit_button:
+        
         with st.spinner("Analyzing..."):
             llm_response = conversation_bot(selected_option, 
                                             content,
@@ -105,11 +110,17 @@ def ask_LLM(content, modelId, selected_option):
         chat_history.append({"user": user_query, "llm": llm_response})
         st.session_state.chat_history = chat_history
         st.text_area("Answer:",value=llm_response, height=500, max_chars=None)
-        st.subheader("Chat History")
-        for entry in chat_history:
-            st.markdown(f"User: {entry['user']}")
-            st.markdown(f"LLM: {entry['llm']}")
-            st.text("-----------"*5)     
+
+        if len(chat_history)!=0:
+            with st.expander('History'):
+                chat_container = st.container(border=False,height=600)
+                with chat_container:
+                        st.subheader("Chat History")
+                        for entry in chat_history:
+                            st.markdown(f"User: {entry['user']}")
+                            st.markdown(f"AI Bot: {entry['llm']}")
+                            st.text("-----------"*5) 
+            
 
 def show_main_dashboard(modelmap,
                         s3_bucket="speech-to-text-meetsummarizar",
@@ -121,13 +132,15 @@ def show_main_dashboard(modelmap,
     os.makedirs(temp_path, exist_ok=True)
     bucket_file_list = source.list_files_in_folder(s3_bucket, user_folder)
     
-    st.title("ScrumBot")   
-    
-    options = ["Upload", "Analyze","Summarize"]
-    default_option_index = 0 
-    option_selected = st.radio("Select an action", options, index=default_option_index)
+    st.title("VideoInsightBot")   
 
-    if option_selected == "Upload":
+    
+    option_selected = st.sidebar.selectbox("Select an option", ["Upload a Meeting", "Q&A with Meeting", "Summarize the Meeting"])
+    
+
+    # Display descriptions in the sidebar
+    if option_selected == "Upload a Meeting":
+        st.write("Upload meeting recordings, It can be Audio/Video or Text files.")
         uploaded_file = st.file_uploader("Choose a video file or txt file", type=["mp4", "mp3", "wav", "flac","ogg","amr","webm", "txt"])
         if uploaded_file is not None:
             source.delete_files_in_folder(temp_path)
@@ -152,7 +165,8 @@ def show_main_dashboard(modelmap,
                 handle_upload_functionality(uploaded_video_file, 
                                             uploaded_file,
                                             bucket_file_list)
-    elif option_selected == "Analyze":
+    elif option_selected == "Q&A with Meeting":
+        st.write("You can ask questions to uploaded meeting files, \nwe use transcription of video to retrieve the answers!.")
         try:
             
             selected_option = show_dropdown(bucket_file_list)
@@ -160,22 +174,24 @@ def show_main_dashboard(modelmap,
                        local_folder, 
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
-            modelId = show_dropdown_models(modelmap)
-            
+            #modelId = show_dropdown_models(modelmap)
+            modelId = modelmap["Claude Instant"]
             if not os.path.exists(transcribe_local_path):
                 source.download_from_s3(selected_option, transcribe_local_path, s3_bucket)
             content = source.read_transcribe(transcribe_local_path)
             ask_LLM(content, modelId, selected_option)
         except:
-            st.text_area("Message",value="No files Found, wait for some more time", height=50, max_chars=None)
+            st.text_area("Message",value="There has been some issue! Try again!", height=50, max_chars=None)
     else:
         try:
+            st.write("You can summarize the meeting using this option.")
             selected_option = show_dropdown(bucket_file_list)
             show_video(selected_option, 
                        local_folder, 
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
-            modelId = show_dropdown_models(modelmap)
+            #modelId = show_dropdown_models(modelmap)
+            modelId = modelmap["Claude Instant"]
             summary_filename = selected_option.replace(".txt", "_"+modelId+"_summary.txt")
             summary_file_local_path = os.path.join(local_folder, summary_filename)
 
@@ -191,10 +207,10 @@ def show_main_dashboard(modelmap,
                 with open(summary_file_local_path, "w") as file:
                     file.write(summary)
             st.subheader("Summary:")
-            st.text_area("Details are from Claude LLM",value=summary, height=500, max_chars=None)
+            st.text_area("Details are from Large Language Model named Claude",value=summary, height=500, max_chars=None)
         except Exception as e:
             print(e)
-            st.text_area("Message",value="No files Found, wait for some more time", height=50, max_chars=None)
+            st.text_area("Message",value="There has been some issue! Try again!", height=50, max_chars=None)
 
 
 if __name__ == "__main__":  
