@@ -18,7 +18,9 @@ def show_dropdown(bucket_file_list):
 def show_dropdown_models(modelmap):
     options = [item for item in modelmap.keys()]
     default = st.session_state.get("selected_option_model", options[0])
-    selected_option = st.selectbox("Select LLM model", options, index=options.index(default))
+    selected_option = st.sidebar.selectbox("Select LLM model", options, index=options.index(default))
+    if selected_option != default:
+        st.session_state.chat_history = []
     st.session_state["selected_option_model"] = selected_option
     return modelmap[selected_option]
 
@@ -131,10 +133,7 @@ def show_main_dashboard(modelmap,
     temp_path = os.path.join(local_folder,user_folder)
     os.makedirs(temp_path, exist_ok=True)
     bucket_file_list = source.list_files_in_folder(s3_bucket, user_folder)
-    
     st.title("VideoInsightBot")   
-
-    
     option_selected = st.sidebar.selectbox("Select an option", ["Upload a Meeting", "Q&A with Meeting", "Summarize the Meeting"])
     
 
@@ -174,8 +173,7 @@ def show_main_dashboard(modelmap,
                        local_folder, 
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
-            #modelId = show_dropdown_models(modelmap)
-            modelId = modelmap["Claude V3"]
+            modelId = show_dropdown_models(modelmap)
             if not os.path.exists(transcribe_local_path):
                 source.download_from_s3(selected_option, transcribe_local_path, s3_bucket)
             content = source.read_transcribe(transcribe_local_path)
@@ -190,8 +188,7 @@ def show_main_dashboard(modelmap,
                        local_folder, 
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
-            #modelId = show_dropdown_models(modelmap)
-            modelId = modelmap["Claude V3"]
+            modelId = show_dropdown_models(modelmap)
             summary_filename = selected_option.replace(".txt", "_"+modelId+"_summary.txt")
             summary_file_local_path = os.path.join(local_folder, summary_filename)
 
@@ -220,7 +217,8 @@ if __name__ == "__main__":
     #              "Claude V2.1": "anthropic.claude-v2:1",
     #              "Claude V3": "anthropic.claude-3-sonnet-20240229-v1:0"}
     
-    model_map = {"Claude V3": "anthropic.claude-3-sonnet-20240229-v1:0"}
+    model_map = {"Claude Instant": "anthropic.claude-instant-v1",
+                 "Claude V3": "anthropic.claude-3-sonnet-20240229-v1:0"}
     s3_bucket="speech-to-text-meetsummarizar"
     local_folder = "SpeechToText"
     user_folder = "defaultUser"
