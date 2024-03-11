@@ -204,7 +204,7 @@ def show_main_dashboard(modelmap,
                 with open(summary_file_local_path, "w") as file:
                     file.write(summary)
             st.subheader("Summary:")
-            st.text_area("Details are from Large Language Model named Claudev3",value=summary, height=500, max_chars=None)
+            st.text_area("Details are from Large Language Model named Claude",value=summary, height=500, max_chars=None)
         except Exception as e:
             print(e)
             st.text_area("Message",value="There has been some issue! Try again!", height=50, max_chars=None)
