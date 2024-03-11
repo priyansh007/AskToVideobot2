@@ -175,7 +175,7 @@ def show_main_dashboard(modelmap,
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
             #modelId = show_dropdown_models(modelmap)
-            modelId = modelmap["Claude Instant"]
+            modelId = modelmap["Claude V3"]
             if not os.path.exists(transcribe_local_path):
                 source.download_from_s3(selected_option, transcribe_local_path, s3_bucket)
             content = source.read_transcribe(transcribe_local_path)
@@ -191,7 +191,7 @@ def show_main_dashboard(modelmap,
                        bucket_file_list)
             transcribe_local_path = "./"+os.path.join(local_folder, selected_option)
             #modelId = show_dropdown_models(modelmap)
-            modelId = modelmap["Claude Instant"]
+            modelId = modelmap["Claude V3"]
             summary_filename = selected_option.replace(".txt", "_"+modelId+"_summary.txt")
             summary_file_local_path = os.path.join(local_folder, summary_filename)
 
@@ -207,17 +207,20 @@ def show_main_dashboard(modelmap,
                 with open(summary_file_local_path, "w") as file:
                     file.write(summary)
             st.subheader("Summary:")
-            st.text_area("Details are from Large Language Model named Claude",value=summary, height=500, max_chars=None)
+            st.text_area("Details are from Large Language Model named Claudev3",value=summary, height=500, max_chars=None)
         except Exception as e:
             print(e)
             st.text_area("Message",value="There has been some issue! Try again!", height=50, max_chars=None)
 
 
 if __name__ == "__main__":  
-    model_map = {"Claude Instant": "anthropic.claude-instant-v1",
-                 "Claude V1": "anthropic.claude-v1", 
-                 "Claude V2": "anthropic.claude-v2",
-                 "Claude V2.1": "anthropic.claude-v2:1",}
+    # model_map = {"Claude Instant": "anthropic.claude-instant-v1",
+    #              "Claude V1": "anthropic.claude-v1", 
+    #              "Claude V2": "anthropic.claude-v2",
+    #              "Claude V2.1": "anthropic.claude-v2:1",
+    #              "Claude V3": "anthropic.claude-3-sonnet-20240229-v1:0"}
+    
+    model_map = {"Claude V3": "anthropic.claude-3-sonnet-20240229-v1:0"}
     s3_bucket="speech-to-text-meetsummarizar"
     local_folder = "SpeechToText"
     user_folder = "defaultUser"

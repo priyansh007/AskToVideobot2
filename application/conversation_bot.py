@@ -8,19 +8,21 @@ from langchain.llms.bedrock import Bedrock
 from langchain.prompts import PromptTemplate
 from langchain.chains import load_summarize_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.chat_models import BedrockChat
 
 def llm_bot(modelId):
     bedrock_client = boto3.client(
             service_name = "bedrock-runtime",
             region_name="us-east-1"
         )
-
-    llm = Bedrock(model_id=modelId,
-                  client=bedrock_client,
-                    model_kwargs={"temperature":0.8,
-                                  "max_tokens_to_sample": 1000}
-                    )
-    return llm
+    model_kwargs={"temperature":0.8,
+                "max_tokens": 1000}
+    model = BedrockChat(
+        client=bedrock_client,
+        model_id=modelId,
+        model_kwargs=model_kwargs,
+    )
+    return model
       
 def conversation_bot(file_name,
                      transcribe,
@@ -56,7 +58,7 @@ def summarizer_bot(transcribe,
                                             template=chunks_prompt)
     
     final_combine_prompt="""You are a Scrum bot who has knowledge of all scrum ceremonies and best practices.
-    Your job is to find To-Do task, Roadblockers and Action Item from the transcribe of a meeting. 
+    Your job is to find To-Do task, Roadblockers and Action Item from the transcribe of a meeting. (It is just one transcribe) 
     If Assignee is mentioned in transcribe please incluse name as well. 
     At the end of your answer please Provide a final summary of the meeting. 
     Transcribe: {text}"""
